@@ -1,0 +1,7 @@
+allocate array with given dimensions to current and next
+for each step:
+  for each element:
+    el = sum(neighbours)/4
+    update e1 on next
+  dealloc current
+  set current to next
