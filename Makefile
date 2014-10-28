@@ -2,8 +2,8 @@ CC=gcc
 CFLAGS= -Wall -g -std=c99
 LIBS=-lpthread
 MAIN=relax
-SRCS = *.c
-OBJS = $(SRCS:.c=.o)
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
 
 all: $(MAIN)
 	@echo "Compiled $(MAIN)"
