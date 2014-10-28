@@ -61,8 +61,8 @@ void *sum_neighbour(void *arg) {
   // printf("Element <%d,%d>; \n", l.i, l.j);
 
   // do the op
-  next[l.i*n + l.j] = (current[n * l.i-1 + l.j] + current[n * l.i + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
-  // calculate precision and store
+  next[l.i*n + l.j] = (current[n * l.i-1 + l.j] + current[n * l.i-1 + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
+  // calculate precision and store next[i][j]
   precision[l.i*n + l.j] = next[l.i*n + l.j] - current[l.i*n + l.j];
 
   // don't need to return anything from thread
@@ -70,7 +70,10 @@ void *sum_neighbour(void *arg) {
 }
 
 int main() {
-  n = 4;
+  clock_t t0;
+  clock_t t1;
+
+  n = 8;
 
   // set up grids
   current = allocate_grid(n);
@@ -79,13 +82,17 @@ int main() {
   init_grid(precision, n);
   init_grid(current, n);
   init_grid(next, n);
+
+  printf("The initial grid:");
   print_grid(precision, n);
 
   // threads and their parameters
   pthread_t* threads = malloc(n*n*sizeof(pthread_t));
   loc* locations = malloc(n*n*sizeof(loc));
 
-  int relaxing = 10; // no of iterations
+  int relaxing = 30; // no of iterations
+
+  t0 = clock();
 
   while(relaxing-- > 0) {
   
@@ -120,11 +127,15 @@ int main() {
     memcpy(current, next, n*n*sizeof(float));
   }
 
+  t1 = clock();
+
   // display results (final grid and precision matrix)
-  printf("The grid:\n");
+  printf("The grid:\n\n");
   print_grid(next, n);
-  printf("The precision:\n");
+  printf("The precision:\n\n");
   print_grid(precision, n);
+
+  printf("%fs elapsed.\n", (double)(t1-t0)/CLOCKS_PER_SEC);
 
   // free malloc'd arrays
   free(next);
