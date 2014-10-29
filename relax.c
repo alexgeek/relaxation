@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include "bmpfile.h"
 
 #define SEED 314195
+#define MAX_ITR 10000
 
 float* current;   // read from this grid
 float* next;      // write to this grid
@@ -28,8 +31,8 @@ void init_grid(float* g, int n) {
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
       // if on edge, flip a coin to see if it we mark it as 1 or 0
-      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1) && 
-        rand() % 4 > 0  ? 1.0f : 0.0f;
+      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1) 
+        /* && rand() % 4 > 0 */ ? 1.0f : 0.0f;
     }    
   }
 }
@@ -67,7 +70,7 @@ void *sum_neighbour(void *arg) {
   // printf("Element <%d,%d>; \n", l.i, l.j);
 
   // do the op
-  next[l.i*n + l.j] = (current[n * l.i-1 + l.j] + current[n * l.i-1 + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
+  next[l.i*n + l.j] = (current[n * l.i-1 + l.j] + current[n * l.i+1 + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
   // calculate precision and store next[i][j]
   precision[l.i*n + l.j] = next[l.i*n + l.j] - current[l.i*n + l.j];
 
@@ -75,12 +78,45 @@ void *sum_neighbour(void *arg) {
   return NULL;
 }
 
+int to_colour (float f) {
+   return 255 - floor(f == 1.0 ? 255 : f * 256.0);
+}
+
+void write_img()
+{
+  int width = n;
+  int height = n;
+  int depth = 24;
+
+  bmpfile_t *bmp;
+  rgb_pixel_t pixel = {0, 0, 0, 0};
+
+  if ((bmp = bmp_create(width, height, depth)) == NULL) {
+    fprintf(stderr, "Could not create bitmap");
+    return;
+  }
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      float f = current[i*n+j];
+      pixel.red = to_colour(f);
+      pixel.green = to_colour(f);
+      pixel.blue = to_colour(f);
+      printf("<%d, %d> = <%d, %d, %d>\n", i, j, pixel.red, pixel.green, pixel.blue);
+      bmp_set_pixel(bmp, j, i, pixel);
+    }
+  }
+
+  bmp_save(bmp, "array.bmp");
+  bmp_destroy(bmp);
+}
+
 int main() {
   clock_t t0;
   clock_t t1;
 
   p = 0.1f;
-  n = 8;
+  n = 10;
 
   // set up grids
   current = allocate_grid(n);
@@ -97,7 +133,7 @@ int main() {
   pthread_t* threads = malloc(n*n*sizeof(pthread_t));
   loc* locations = malloc(n*n*sizeof(loc));
 
-  int relaxing = 10000; // no of iterations
+  int relaxing = MAX_ITR; // no of iterations
 
   t0 = clock();
 
@@ -130,16 +166,18 @@ int main() {
       }
     }
 
+    // count threads that have reached precision
     int finished = 0;
     for(int i = 1; i < n-1; i++)
       for(int j = 1; j < n-1; j++)
         if(precision[i*n+j] < p)
           finished++;
 
+    // check all the elements not on the edge have reached precision
     if(finished == (n*n) - (4*n-4))
     {
-      printf("Reached %f precision in %d iterations.", p, relaxing);
-      relaxing = 0;
+      printf("Reached %f precision in %d iterations.", p, MAX_ITR-relaxing);
+      relaxing = 0; // aborts loop
     }
 
     // copy next to current TODO just swap pointers instead of copying.
@@ -156,6 +194,8 @@ int main() {
   
   printf("n = %d\n", n);
   printf("%fs elapsed.\n", 1000*(double)(t1-t0)/CLOCKS_PER_SEC);
+
+  write_img();
 
   // free malloc'd arrays
   free(next);

@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS= -Wall -g -std=c99
 LIBS=-lpthread -lm
 MAIN=relax
-SRCS=$(wildcard *.c)
+SRCS=bmpfile.c relax.c
 OBJS=$(SRCS:.c=.o)
 
 all: $(MAIN)
