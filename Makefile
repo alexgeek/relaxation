@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS= -Wall -g -std=c99
-LIBS=-lpthread
+LIBS=-lpthread -lm
 MAIN=relax
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)

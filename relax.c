@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define SEED 314195
+
 float* current;   // read from this grid
 float* next;      // write to this grid
 float* precision; // next - current
 int n;            // grid dimensions
+float p;          // precision
 
 // allocate an array (using 1d array for 2d data)
 float* allocate_grid(int n) {
@@ -21,9 +24,12 @@ float* allocate_grid(int n) {
 
 // sets edge values to 1 and inner values to 0
 void init_grid(float* g, int n) {
+  srand(SEED);
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
-      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1) ? 1.0f : 0.0f;
+      // if on edge, flip a coin to see if it we mark it as 1 or 0
+      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1) && 
+        rand() % 4 > 0  ? 1.0f : 0.0f;
     }    
   }
 }
@@ -42,7 +48,7 @@ void init_to(float* g, int n, float x)
 void print_grid(const float* g, int n) {
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
-      printf("\t %f", g[n*i+j]);
+      printf("%.4f ", g[n*i+j]);
     }
     printf("\n");
   }
@@ -73,6 +79,7 @@ int main() {
   clock_t t0;
   clock_t t1;
 
+  p = 0.1f;
   n = 8;
 
   // set up grids
@@ -83,14 +90,14 @@ int main() {
   init_grid(current, n);
   init_grid(next, n);
 
-  printf("The initial grid:");
+  printf("The initial grid:\n");
   print_grid(precision, n);
 
   // threads and their parameters
   pthread_t* threads = malloc(n*n*sizeof(pthread_t));
   loc* locations = malloc(n*n*sizeof(loc));
 
-  int relaxing = 30; // no of iterations
+  int relaxing = 10000; // no of iterations
 
   t0 = clock();
 
@@ -123,6 +130,18 @@ int main() {
       }
     }
 
+    int finished = 0;
+    for(int i = 1; i < n-1; i++)
+      for(int j = 1; j < n-1; j++)
+        if(precision[i*n+j] < p)
+          finished++;
+
+    if(finished == (n*n) - (4*n-4))
+    {
+      printf("Reached %f precision in %d iterations.", p, relaxing);
+      relaxing = 0;
+    }
+
     // copy next to current TODO just swap pointers instead of copying.
     memcpy(current, next, n*n*sizeof(float));
   }
@@ -134,8 +153,9 @@ int main() {
   print_grid(next, n);
   printf("The precision:\n\n");
   print_grid(precision, n);
-
-  printf("%fs elapsed.\n", (double)(t1-t0)/CLOCKS_PER_SEC);
+  
+  printf("n = %d\n", n);
+  printf("%fs elapsed.\n", 1000*(double)(t1-t0)/CLOCKS_PER_SEC);
 
   // free malloc'd arrays
   free(next);
