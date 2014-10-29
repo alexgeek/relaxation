@@ -70,7 +70,7 @@ void *sum_neighbour(void *arg) {
   // printf("Element <%d,%d>; \n", l.i, l.j);
 
   // do the op
-  next[l.i*n + l.j] = (current[n * l.i-1 + l.j] + current[n * l.i+1 + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
+  next[l.i*n + l.j] = (current[n * (l.i-1) + l.j] + current[n * (l.i+1) + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
   // calculate precision and store next[i][j]
   precision[l.i*n + l.j] = next[l.i*n + l.j] - current[l.i*n + l.j];
 
@@ -102,7 +102,7 @@ void write_img()
       pixel.red = to_colour(f);
       pixel.green = to_colour(f);
       pixel.blue = to_colour(f);
-      printf("<%d, %d> = <%d, %d, %d>\n", i, j, pixel.red, pixel.green, pixel.blue);
+      //printf("<%d, %d> = <%d, %d, %d>\n", i, j, pixel.red, pixel.green, pixel.blue);
       bmp_set_pixel(bmp, j, i, pixel);
     }
   }
@@ -115,8 +115,10 @@ int main() {
   clock_t t0;
   clock_t t1;
 
-  p = 0.1f;
-  n = 10;
+  p = 0.001f;
+  n = 64;
+
+  int iterations;
 
   // set up grids
   current = allocate_grid(n);
@@ -176,11 +178,11 @@ int main() {
     // check all the elements not on the edge have reached precision
     if(finished == (n*n) - (4*n-4))
     {
-      printf("Reached %f precision in %d iterations.", p, MAX_ITR-relaxing);
+      iterations = MAX_ITR - relaxing;
       relaxing = 0; // aborts loop
     }
 
-    // copy next to current TODO just swap pointers instead of copying.
+    // copy next to current
     memcpy(current, next, n*n*sizeof(float));
   }
 
@@ -193,6 +195,7 @@ int main() {
   print_grid(precision, n);
   
   printf("n = %d\n", n);
+  printf("Reached %f precision in %d iterations.", p, iterations);
   printf("%fs elapsed.\n", 1000*(double)(t1-t0)/CLOCKS_PER_SEC);
 
   write_img();
