@@ -1,6 +1,6 @@
 #PBS -N relax
 #PBS -S /bin/bash
- 
+
 ## Specify the resources: one node with 8 cores and for 1 hour (DD:HH:MM:SS)
 ## nodes
 #PBS -l nodes=1:ppn=8
@@ -8,9 +8,9 @@
 #PBS -A cm30225
 #PBS -e err.log
 #PBS -o out.log
- 
+
 # Mail to user when job terminate or abort (b=begins, e=ends, a=aborts)
-#PBS -m ae
+#PBS -m a
 module load gcc torque
 pwd
 cd $HOME/coursework1
