@@ -8,15 +8,22 @@
 #define SEED 314195
 #define MAX_ITR 10000
 
+/* program vars */
 float* current;   // read from this grid
 float* next;      // write to this grid
 float* precision; // next - current
 int n;            // grid dimensions
 float p;          // precision
 
+/* sync vars */
+pthread_mutex_t precision_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+pthread_cond_t precision_cond = PTHREAD_COND_INITIALIZER;
+int nThreads;     // number of threads
+int relaxed = 0;  // number of threads that reached precision
+
 // allocate an array (using 1d array for 2d data)
 float* allocate_grid(int n) {
-	float* grid_ptr = (float*)malloc(sizeof(float)*n*n);
+  float* grid_ptr = (float*)malloc(sizeof(float)*n*n);
   if(grid_ptr==NULL)
   {
     fprintf(stderr, "Could not allocate grid.");
@@ -31,9 +38,9 @@ void init_grid(float* g, int n) {
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
       // if on edge, flip a coin to see if it we mark it as 1 or 0
-      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1) 
+      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1)
         /* && rand() % 4 > 0 */ ? 1.0f : 0.0f;
-    }    
+    }
   }
 }
 
@@ -43,7 +50,7 @@ void init_to(float* g, int n, float x)
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
       g[n*i+j] = x;
-    }    
+    }
   }
 }
 
@@ -65,7 +72,7 @@ typedef struct {
 void *sum_neighbour(void *arg) {
   // get the args
   loc l = *((loc*)arg);
-  
+
   // debug code to identify element
   // printf("Element <%d,%d>; \n", l.i, l.j);
 
@@ -78,8 +85,27 @@ void *sum_neighbour(void *arg) {
   return NULL;
 }
 
+typedef struct {
+  int from, to;
+} bounds;
+
+void *relax_part(void *arg) {
+  // get bounds of subarray
+  bounds b = *(bounds*)arg;
+
+  int i = b.from;
+  while (i < b.to) {
+    next[i] = (current[i-1] + current[i+1] +
+      current[i-n] + current[i+n]);
+    precision[i] = next[i] - current[i];
+    i++;
+  }
+}
+
+
+
 int to_colour (float f) {
-   return 255 - floor(f == 1.0 ? 255 : f * 256.0);
+  return 255 - floor(f == 1.0 ? 255 : f * 256.0);
 }
 
 void write_img()
@@ -140,7 +166,7 @@ int main() {
   t0 = clock();
 
   while(relaxing-- > 0) {
-  
+
     // create threads for each of the inner elements
     for(int i = 1; i < n-1; i++)
     {
@@ -154,7 +180,7 @@ int main() {
         }
       }
     }
-    
+
     // wait for all threads to finish before continuing.
     for(int i = 1; i < n-1; i++)
     {
@@ -193,7 +219,7 @@ int main() {
   print_grid(next, n);
   printf("The precision:\n\n");
   print_grid(precision, n);
-  
+
   printf("n = %d\n", n);
   printf("Reached %f precision in %d iterations.", p, iterations);
   printf("%fs elapsed.\n", 1000*(double)(t1-t0)/CLOCKS_PER_SEC);
