@@ -1,18 +1,18 @@
 CC=gcc
-CFLAGS= -Wall -g -std=c99
+CFLAGS= -Wall -g
 LIBS=-lpthread -lm
 MAIN=relax
-SRCS=bmpfile.c relax.c
+SRCS=grid.c bmpfile.c relax.c
 OBJS=$(SRCS:.c=.o)
 
 all: $(MAIN)
 	@echo "Compiled $(MAIN)"
- 
+
 $(MAIN) : $(OBJS)
 	${CC} ${CFLAGS} -o $(MAIN) $(OBJS) $(LIBS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
- 
+
 clean:
 	${RM} *.o *.~ $(MAIN) array.bmp

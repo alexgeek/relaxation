@@ -1,3 +1,5 @@
+# Elementwise solution
+
 allocate array with given dimensions to current and next
 for each step:
   for each element:
@@ -5,3 +7,31 @@ for each step:
     update e1 on next
   dealloc current
   set current to next
+
+
+# Divide and Conquer
+
+## Worker Threads
+
+while condvar > 0
+  for each element assigned
+    complete = true
+    do the add
+    if complete && precision not met
+        complete = false
+  wait for other threads to complete
+  if complete == false then run_again = true
+  wait for other threads to complete
+
+## Main Thread
+
+init barrier to n
+create n threads, assigning them the bounds of the array
+join all threads
+
+
+
+barrier
+if threadid == 0 then
+  spawn cleanup thread
+all wait on semaphore

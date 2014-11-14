@@ -1,107 +1,116 @@
+#define _XOPEN_SOURCE 600
+// http://pages.cs.wisc.edu/~travitch/pthreads_primer.html
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "bmpfile.h"
+#include "grid.h"
 
-#define SEED 314195
-#define MAX_ITR 10000
+typedef int bool;
+#define true 1
+#define false 0
+
+/* thread data struct */
+typedef struct {
+  int from, to;
+} boundary;
 
 /* program vars */
 float* current;   // read from this grid
 float* next;      // write to this grid
-float* precision; // next - current
-int n;            // grid dimensions
-float p;          // precision
+int dimension = 10;       // grid dimensions
+float precision = 0.01f;  // precision
 
 /* sync vars */
-pthread_mutex_t precision_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-pthread_cond_t precision_cond = PTHREAD_COND_INITIALIZER;
-int nThreads;     // number of threads
-int relaxed = 0;  // number of threads that reached precision
+pthread_barrier_t barrier;
+bool again = false;   // if should run another iteration
+int thread_count = 8;     // number of threads
+pthread_t* threads;   // array of threads
+boundary* bounds;     // thread data (rows to span)
 
-// allocate an array (using 1d array for 2d data)
-float* allocate_grid(int n) {
-  float* grid_ptr = (float*)malloc(sizeof(float)*n*n);
-  if(grid_ptr==NULL)
-  {
-    fprintf(stderr, "Could not allocate grid.");
-    exit(3);
-  }
-  return grid_ptr;
+int partition_size() {
+  return dimension / thread_count;
 }
 
-// sets edge values to 1 and inner values to 0
-void init_grid(float* g, int n) {
-  srand(SEED);
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++) {
-      // if on edge, flip a coin to see if it we mark it as 1 or 0
-      g[n*i+j] = (i == 0 || i == n -1 || j == 0 || j == n-1)
-        /* && rand() % 4 > 0 */ ? 1.0f : 0.0f;
-    }
-  }
-}
-
-// set each value of g of size n to x
-void init_to(float* g, int n, float x)
+void assign_threads()
 {
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++) {
-      g[n*i+j] = x;
-    }
-  }
-}
+  threads = malloc(thread_count*sizeof(pthread_t));
+  bounds = malloc(thread_count*sizeof(boundary));
 
-// utility function to print array of size n
-void print_grid(const float* g, int n) {
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++) {
-      printf("%.4f ", g[n*i+j]);
-    }
-    printf("\n");
-  }
-}
+  printf("hello");
 
-typedef struct {
-  int i, j;
-} loc;
+  int size = partition_size();
 
-// parallel task
-void *sum_neighbour(void *arg) {
-  // get the args
-  loc l = *((loc*)arg);
-
-  // debug code to identify element
-  // printf("Element <%d,%d>; \n", l.i, l.j);
-
-  // do the op
-  next[l.i*n + l.j] = (current[n * (l.i-1) + l.j] + current[n * (l.i+1) + l.j] + current[n * l.i + l.j-1] + current[n * l.i + l.j+1])/4.0f;
-  // calculate precision and store next[i][j]
-  precision[l.i*n + l.j] = next[l.i*n + l.j] - current[l.i*n + l.j];
-
-  // don't need to return anything from thread
-  return NULL;
-}
-
-typedef struct {
-  int from, to;
-} bounds;
-
-void *relax_part(void *arg) {
-  // get bounds of subarray
-  bounds b = *(bounds*)arg;
-
-  int i = b.from;
-  while (i < b.to) {
-    next[i] = (current[i-1] + current[i+1] +
-      current[i-n] + current[i+n]);
-    precision[i] = next[i] - current[i];
+  int i = 0;
+  while (i < thread_count)
+  {
+    bounds[i] = (boundary){.from=i, .to=i + size};
+    if (i == thread_count - 1) bounds[i].to = dimension - 1;
     i++;
   }
 }
 
+void *relax_part(void *arg) {
+  // get rows to process
+  boundary b = *(boundary*)arg;
+
+  // work loop
+  do {
+    bool complete = true;
+    int row;
+    for(row = b.from; row < b.to; row++)
+    {
+      int col = 1;
+      while (col < dimension-1) { // row minus the edges
+        // slightly odd code to get neighbours on 1D array
+        int i = row * dimension + col;
+        next[i] = (current[i-1] + current[i+1] +
+          current[i-dimension] + current[i+dimension]);
+        // the precision check
+        float p = next[i] - current[i];
+        // if any do not meet the precision
+        if(!(p < precision)) complete = false;
+        i++;
+      }
+    }
+
+    again = false; // all agree its false then wait
+
+    int rc = pthread_barrier_wait(&barrier);
+    if(rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD)
+    {
+        printf("Could not wait on barrier\n");
+        exit(-1);
+    }
+
+    // if we need to continue flag it
+    if (complete) {
+      again = true;
+    }
+
+    // hack to run on just thread 1
+    if (b.from == 1) {
+      // copy new data (next) to the current for next iter
+      memcpy(current, next, dimension*dimension*sizeof(float));
+    }
+
+    rc = pthread_barrier_wait(&barrier);
+    if(rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD)
+    {
+        printf("Could not wait on barrier\n");
+        exit(-1);
+    }
+
+    // now if anyone set again before the barrier,
+    // then we'll have to keep going
+    // otherwise the loop finishes and we exit
+
+  } while(again);
+
+  pthread_exit(NULL);
+}
 
 
 int to_colour (float f) {
@@ -110,8 +119,8 @@ int to_colour (float f) {
 
 void write_img()
 {
-  int width = n;
-  int height = n;
+  int width = dimension;
+  int height = dimension;
   int depth = 24;
 
   bmpfile_t *bmp;
@@ -122,9 +131,10 @@ void write_img()
     return;
   }
 
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      float f = current[i*n+j];
+  int i, j;
+  for (i = 0; i < dimension; i++) {
+    for (j = 0; j < dimension; j++) {
+      float f = current[i*dimension+j];
       pixel.red = to_colour(f);
       pixel.green = to_colour(f);
       pixel.blue = to_colour(f);
@@ -141,87 +151,59 @@ int main() {
   clock_t t0;
   clock_t t1;
 
-  p = 0.001f;
-  n = 64;
+  // TODO command line opts
 
-  int iterations;
 
   // set up grids
-  current = allocate_grid(n);
-  next = allocate_grid(n);
-  precision = allocate_grid(n);
-  init_grid(precision, n);
-  init_grid(current, n);
-  init_grid(next, n);
+  current = allocate_grid(dimension);
+  next = allocate_grid(dimension);
+  init_grid(current, dimension);
+  init_grid(next, dimension);
 
-  printf("The initial grid:\n");
-  print_grid(precision, n);
-
-  // threads and their parameters
-  pthread_t* threads = malloc(n*n*sizeof(pthread_t));
-  loc* locations = malloc(n*n*sizeof(loc));
-
-  int relaxing = MAX_ITR; // no of iterations
+  // init sync vars
+  if(pthread_barrier_init(&barrier, NULL, thread_count))
+  {
+    fprintf(stderr, "Could not create barrier.");
+    exit(4);
+  }
 
   t0 = clock();
 
-  while(relaxing-- > 0) {
+  // assign threads
+  assign_threads();
 
-    // create threads for each of the inner elements
-    for(int i = 1; i < n-1; i++)
+  // start threads
+  int i = 0;
+  while(i < thread_count)
+  {
+    if(pthread_create(&threads[i], NULL, relax_part, &bounds[i]))
     {
-      for(int j = 1; j < n-1; j++)
-      {
-        locations[i*n + j] = (loc){.i = i, .j = j};
-        if(pthread_create(&threads[i*n + j], NULL, sum_neighbour, &locations[i*n + j]))
-        {
-          fprintf(stderr, "Could not create thread.");
-          return 1;
-        }
-      }
+      fprintf(stderr, "Could not create thread.");
+      return 1;
     }
-
-    // wait for all threads to finish before continuing.
-    for(int i = 1; i < n-1; i++)
-    {
-      for(int j = 1; j < n-1; j++)
-      {
-        if(pthread_join(threads[i*n+j], NULL))
-        {
-          fprintf(stderr, "Could not join threads.");
-          return 2;
-        }
-      }
-    }
-
-    // count threads that have reached precision
-    int finished = 0;
-    for(int i = 1; i < n-1; i++)
-      for(int j = 1; j < n-1; j++)
-        if(precision[i*n+j] < p)
-          finished++;
-
-    // check all the elements not on the edge have reached precision
-    if(finished == (n*n) - (4*n-4))
-    {
-      iterations = MAX_ITR - relaxing;
-      relaxing = 0; // aborts loop
-    }
-
-    // copy next to current
-    memcpy(current, next, n*n*sizeof(float));
+    i++;
   }
+
+  // join threads
+  i = 0;
+  while(i < thread_count)
+  {
+    if(pthread_join(threads[i], NULL))
+    {
+      fprintf(stderr, "Could not create thread.");
+      return 1;
+    }
+    i++;
+  }
+
 
   t1 = clock();
 
   // display results (final grid and precision matrix)
   printf("The grid:\n\n");
-  print_grid(next, n);
-  printf("The precision:\n\n");
-  print_grid(precision, n);
+  print_grid(next, dimension);
 
-  printf("n = %d\n", n);
-  printf("Reached %f precision in %d iterations.", p, iterations);
+  printf("n = %d\n", dimension);
   printf("%fs elapsed.\n", 1000*(double)(t1-t0)/CLOCKS_PER_SEC);
 
   write_img();
@@ -229,7 +211,6 @@ int main() {
   // free malloc'd arrays
   free(next);
   free(current);
-  free(precision);
 
   return 0;
 }
