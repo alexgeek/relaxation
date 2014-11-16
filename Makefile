@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS= -Wall -g
 LIBS=-lpthread -lm
 MAIN=relax
-SRCS=grid.c bmpfile.c relax.c
+SRCS=grid.c thread.c bmpfile.c relax.c
 OBJS=$(SRCS:.c=.o)
 
 all: $(MAIN)
