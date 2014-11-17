@@ -15,4 +15,4 @@ $(MAIN) : $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
-	${RM} *.o *.~ $(MAIN) array.bmp
+	${RM} *.o *.~ $(MAIN) grid.bmp
