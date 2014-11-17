@@ -9,9 +9,9 @@
 #include "thread.h"
 
 int main(int argc, char **argv) {
-  int n = 10;     // dimension
-  float p = 0.001f; // precision
-  int t = 8;      // threads
+  int n = 4;     // dimension
+  float p = 0.1f; // precision
+  int t = 2;      // threads
   int v = 0;      // verbose
   int opt;
   while ((opt = getopt (argc, argv, "n:p:t:v:i")) != -1)

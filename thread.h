@@ -41,6 +41,7 @@ params* create_params(global* g, int from, int to);
 void free_params(params* p);
 int partition_size(int n, int num_threads);
 float check_precision(float new, float old, float p);
+int swap_grid(float* current, float* next, int n);
 float relax(float left, float right, float up, float down);
 int sync_repeat(pthread_barrier_t* barr, global* g);
 int sync_continue(pthread_cond_t* cond, pthread_mutex_t* mtx, int* completed,

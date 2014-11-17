@@ -68,7 +68,6 @@ int swap_grid(float* current, float* next, int n)
     fprintf(stderr, "Cannot copy memory.\n");
     exit(ERR_MEM_COPY);
   }
-  printf("Copied Memory!\n");
   return 1;
 }
 
@@ -83,7 +82,7 @@ int sync_repeat(pthread_barrier_t* barr, global* g)
     printf("Serial task.\n");
     g->completed = 0;
     g->relaxed = 0;
-    swap_grid(g->next, g->current, g->dimension);
+    swap_grid(g->current, g->next, g->dimension);
   }
   rc = pthread_barrier_wait(barr);
   return 1;
@@ -108,6 +107,7 @@ int relax_row(float* current, float* next, int row, int length, float precision)
 {
   int flag = 1; // flag as relaxed by default
   int col;
+  // loop through row ignoring edges
   for(col = 1; col < length-1; col++)
   {
     // 2d indices -> 1d index
@@ -132,8 +132,6 @@ void* relax_thread(void* arg)
   float* current = (par.g->current);
   float* next = (par.g->next);
 
-  printf("Working on %d to %d.\n", par.from, par.to);
-
   int again;
   do {
     int row, relaxed = 1;
@@ -145,9 +143,6 @@ void* relax_thread(void* arg)
       &(par.g->completed), &(par.g->threads), &(par.g->relaxed), relaxed);
     if(again) {
       sync_repeat(&(par.g->start_barrier), par.g);
-    } // else it exits
-    else {
-      printf("DOES THIS EVER HAPPEN");
     }
   } while(again);
 
