@@ -17,6 +17,7 @@ global* create_globals(int dimension, float precision, int threads)
     exit(ERR_MUTEX);
   }
   g->threads = threads;
+  g->completed = 0;
   g->relaxed = 0;
   g->dimension = dimension;
   g->precision = precision;
@@ -71,20 +72,20 @@ int swap_grid(float* current, float* next, int n)
   return 1;
 }
 
-int sync_start(pthread_barrier_t* barr, int* completed, int* relaxed)
+int sync_repeat(pthread_barrier_t* barr, global* g)
 {
-  printf("Barrier start wait\n");
   int rc = pthread_barrier_wait(barr);
   if(rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
     fprintf(stderr, "Cannot wait on barrier. rc = %d.\n", rc);
     exit(ERR_BARRIER);
   } else if(rc == PTHREAD_BARRIER_SERIAL_THREAD)
   {
-    printf("Resetting completed and relaxed.\n");
-    *completed = 0;
-    *relaxed = 0;
+    printf("Serial task.\n");
+    g->completed = 0;
+    g->relaxed = 0;
+    swap_grid(g->next, g->current, g->dimension);
   }
-  printf("Barrier start wait finished\n");
+  rc = pthread_barrier_wait(barr);
   return 1;
 }
 
@@ -92,20 +93,13 @@ int sync_continue(pthread_cond_t* cond, pthread_mutex_t* mtx, int* completed,
   int* threads, int* relaxed, int thread_relaxed) {
   pthread_mutex_lock(mtx);
   (*completed)++;
-  printf("Incremented completed\n");
-  if(thread_relaxed) {
+  if(thread_relaxed)
     (*relaxed)++;
-  }
-  while(*completed < *threads) {
-    printf("waiting. (%d < % d)\n", *completed, *threads);
+  if(*completed == *threads)
+    pthread_cond_broadcast(cond);
+  while(*completed < *threads)
     pthread_cond_wait(cond, mtx);
-  }
-  if(*completed == *threads) {
-    printf("broadcast\n");
-    pthread_cond_signal(cond);
-  }
   int flag = (*relaxed < *threads);
-  if(!flag) printf("Finished!");
   pthread_mutex_unlock(mtx);
   return flag;
 }
@@ -142,33 +136,28 @@ void* relax_thread(void* arg)
 
   int again;
   do {
-    // hack to run on one thread
-    if(par.from == 1) swap_grid(current, next, par.g->dimension);
-    printf("%i preparing sync \n", par.from);
-    sync_start(&(par.g->start_barrier), &(par.g->completed), &(par.g->relaxed));
-    printf("%i post sync \n", par.from);
     int row, relaxed = 1;
     for(row = par.from; row < par.to; row++)
       // if row not relaxed then set flag relaxed false
       if(!relax_row(current, next, row, par.g->dimension, par.g->precision))
         relaxed = 0;
-    printf("%i preparing sync2 \n", par.from);
     again = sync_continue(&(par.g->finished_cond), &(par.g->finished_mutex),
       &(par.g->completed), &(par.g->threads), &(par.g->relaxed), relaxed);
-    printf("%i post sync2 \n", par.from);
+    if(again) {
+      sync_repeat(&(par.g->start_barrier), par.g);
+    } // else it exits
+    else {
+      printf("DOES THIS EVER HAPPEN");
+    }
   } while(again);
 
   free_params((params*)arg);
-
-  printf("Rows %d-%d complete.\n\n", par.from, par.to);
-
   pthread_exit(NULL);
 }
 
 void start_threads(pthread_t* threads, global* g)
 {
   int size = partition_size(g->dimension, g->threads);
-  printf("partition size = %d\n", size);
   int t = 0;
   do {
     int from = t*size + 1;
