@@ -79,7 +79,6 @@ int sync_repeat(pthread_barrier_t* barr, global* g)
     exit(ERR_BARRIER);
   } else if(rc == PTHREAD_BARRIER_SERIAL_THREAD)
   {
-    printf("Serial task.\n");
     g->completed = 0;
     g->relaxed = 0;
     swap_grid(g->current, g->next, g->dimension);
