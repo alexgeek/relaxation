@@ -15,6 +15,7 @@
 #define ERR_PARAMS        4
 #define ERR_THREAD_CREATE 5
 #define ERR_MEM_COPY      6
+#define ERR_MALLOC        7
 
 typedef struct {
   pthread_barrier_t start_barrier;
@@ -41,8 +42,8 @@ params* create_params(global* g, int from, int to);
 void free_params(params* p);
 int partition_size(int n, int num_threads);
 float check_precision(float new, float old, float p);
-int swap_grid(float* current, float* next, int n);
 float relax(float left, float right, float up, float down);
+int swap_grid(float* current, float* next, int n);
 int sync_repeat(pthread_barrier_t* barr, global* g);
 int sync_continue(pthread_cond_t* cond, pthread_mutex_t* mtx, int* completed,
   int* threads, int* relaxed, int thread_relaxed);
