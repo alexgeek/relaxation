@@ -1,7 +1,7 @@
 #!/bin/bash
 START=1
-INC=5
-FINISH=100
+INC=50
+FINISH=100000
 OUTPUT="time"
 TIMES=(real user sys)
 for t in ${TIMES[*]}; do
@@ -13,7 +13,7 @@ for t in ${TIMES[*]}; do
   done
 done
 for t in ${TIMES[*]}; do
-  cat time.log
+  cat "$OUTPUT.$t.log"
 done
 
 for t in ${TIMES[*]}; do
