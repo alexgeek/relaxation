@@ -10,10 +10,10 @@
 #PBS -o out.log
 
 # Mail to user when job terminate or abort (b=begins, e=ends, a=aborts)
-#PBS -m a
+#PBS -m ae
 module load gcc torque
 pwd
 cd $HOME/coursework1
 make clean
 make
-./relax
+./test.sh
