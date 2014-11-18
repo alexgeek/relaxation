@@ -1,4 +1,5 @@
 *.o
+*.log
 *~
 grid.bmp
 relax

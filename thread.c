@@ -245,7 +245,8 @@ void write_img(global* g)
     return;
   }
 
-  print_grid(g->next, g->dimension);
+  // TODO add debugging preprocessor
+  //print_grid(g->next, g->dimension);
 
   int i, j;
   for (i = 0; i < g->dimension; i++) {
