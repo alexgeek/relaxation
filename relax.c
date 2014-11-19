@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE 600
-// http://pages.cs.wisc.edu/~travitch/pthreads_primer.html
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,10 +7,11 @@
 #include "thread.h"
 
 int main(int argc, char **argv) {
-  int n = 4;     // dimension
-  float p = 0.1f; // precision
-  int t = 2;      // threads
+  int n = 10;      // dimension
+  float p = 0.01f; // precision
+  int t = 8;      // threads
   int v = 0;      // verbose
+  int i = 0;      // bitmap
   int opt;
   while ((opt = getopt (argc, argv, "n:p:t:v:i")) != -1)
   {
@@ -35,13 +34,26 @@ int main(int argc, char **argv) {
       case 'v':
         v = 1;
         break;
+      case 'i':
+        i = 1;
+        break;
     }
   }
-  if(t > n-2) {
+  if(v && t > n-2) {
     fprintf(stderr, "Too many threads, using maximum of %d.\n", n-2);
     t = (n-2);
   }
+  // t must be at least 1
+  t = t < 1 ? 1 : t;
   if(v) printf("n = %d, p = %f, t = %d\n", n, p, t);
-  relax_grid(n, p, t);
+  float* result = relax_grid(n, p, t);
+  if(i) {
+    // write to a bitmap for quick visual checks
+    write_img(result, n);
+  }
+  if(v) {
+    print_grid(result, n);
+  }
+  free(result);
   return 0;
 }

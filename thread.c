@@ -31,7 +31,6 @@ global* create_globals(int dimension, float precision, int threads)
 
 // tidying up
 void free_globals(global* g) {
-  free(g->next);
   free(g->current);
   pthread_barrier_destroy(&(g->start_barrier));
   pthread_cond_destroy(&(g->finished_cond));
@@ -204,7 +203,7 @@ void join_threads(pthread_t* threads, int thread_count)
 }
 
 // kicks it all off
-int relax_grid(int dimension, float precision, int threads)
+float* relax_grid(int dimension, float precision, int threads)
 {
   global* g = create_globals(dimension, precision, threads);
   pthread_t* thread_ptrs = (pthread_t*)malloc(threads*sizeof(pthread_t));
@@ -215,11 +214,10 @@ int relax_grid(int dimension, float precision, int threads)
   }
   start_threads(thread_ptrs, g);
   join_threads(thread_ptrs, threads);
-  // write to a bitmap for quick visual checks
-  write_img(g);
+  float* final = g->next;
   free(thread_ptrs);
   free_globals(g);
-  return 1;
+  return final;
 }
 
 
@@ -231,27 +229,21 @@ int to_colour (float f) {
 }
 
 // write grid to bitmap
-void write_img(global* g)
+void write_img(float* grid, int n)
 {
-  int width = g->dimension;
-  int height = g->dimension;
   int depth = 24;
-
   bmpfile_t *bmp;
   rgb_pixel_t pixel = {0, 0, 0, 0};
 
-  if ((bmp = bmp_create(width, height, depth)) == NULL) {
+  if ((bmp = bmp_create(n, n, depth)) == NULL) {
     fprintf(stderr, "Could not create bitmap.\n");
     return;
   }
 
-  // TODO add debugging preprocessor
-  //print_grid(g->next, g->dimension);
-
   int i, j;
-  for (i = 0; i < g->dimension; i++) {
-    for (j = 0; j < g->dimension; j++) {
-      float f = g->next[i*(g->dimension) + j];
+  for (i = 0; i < n; i++) {
+    for (j = 0; j < n; j++) {
+      float f = grid[i*n + j];
       pixel.red = to_colour(f);
       pixel.green = to_colour(f);
       pixel.blue = to_colour(f);

@@ -1,8 +1,8 @@
 #!/bin/bash
 START=1
-INC=50
-FINISH=100000
-N=100
+INC=1
+FINISH=16
+N=10000
 OUTPUT="time"
 TIMES=(real user sys)
 for t in ${TIMES[*]}; do
@@ -17,13 +17,15 @@ for t in ${TIMES[*]}; do
   cat "$OUTPUT.$t.log"
 done
 
-for t in ${TIMES[*]}; do
+#for t in ${TIMES[*]}; do
 gnuplot <<- EOF
     set xlabel "Threads"
-    set ylabel "Time (ms)"
-    set term dumb
-    #set term png
-    #set output "${OUTPUT}.${t}.png"
-    plot [$START:$FINISH] "${OUTPUT}.${t}.log" title "Speedup ($t)"
+    set ylabel "Time (s)"
+    #set term dumb
+    set term png
+    set output "${OUTPUT}.png"
+    plot [$START:$FINISH] "${OUTPUT}.${TIMES[0]}.log" title "Speedup (${TIMES[0]})" with lines, \
+    "${OUTPUT}.${TIMES[1]}.log" title "Speedup (${TIMES[1]})" with lines, \
+    "${OUTPUT}.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" with lines
 EOF
-done
+#done

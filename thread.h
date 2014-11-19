@@ -51,8 +51,8 @@ int relax_row(float* current, float* next, int row, int length, float precision)
 void *relax_thread(void* arg);
 void start_threads(pthread_t* threads, global* g);
 void join_threads(pthread_t* threads, int thread_count);
-int relax_grid(int dimension, float precision, int threads);
+float* relax_grid(int dimension, float precision, int threads);
 int to_colour (float f);
-void write_img(global* g);
+void write_img(float* grid, int n);
 
 #endif
