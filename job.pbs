@@ -14,4 +14,4 @@
 module load gcc torque
 make clean
 make
-./test.sh
+./test.sh 1 1 16 4098

@@ -10,8 +10,7 @@ for t in ${TIMES[*]}; do
   O="$OUTPUT.$t.log"
   >$O
   for i in `seq $START $INC $FINISH`; do
-  # I refuse to give it a linebreak
-  (time ./relax -n $N -t $i)  2>&1 > /dev/null | grep $t | awk '{print $2}'|sed "s/^[0-9]\+m//" | xargs printf "$i\t%s\n" >> $O
+  (time ./relax -n $N -t $i)  2>&1 > /dev/null | grep $t | awk '{print $2}' |sed "s/^[0-9]\+m//" | xargs printf "$i\t%s\n" >> $O
   done
 done
 for t in ${TIMES[*]}; do
