@@ -4,13 +4,13 @@
 ## Specify the resources: one node with 8 cores and for 1 hour (DD:HH:MM:SS)
 ## nodes
 #PBS -l nodes=1:ppn=8
-#PBS -l walltime=0:10:00
+#PBS -l walltime=0:02:00
 #PBS -A cm30225
 #PBS -e err.log
 #PBS -o out.log
-
-# Mail to user when job terminate or abort (b=begins, e=ends, a=aborts)
 #PBS -m ae
+
+cd $PBS_O_WORKDIR
 module load gcc torque
 make clean
 make
