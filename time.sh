@@ -44,7 +44,7 @@ gnuplot <<- EOF
     set output "time.png"
     plot "time.${TIMES[0]}.log" title "Speedup (${TIMES[0]})" smooth unique lw 2 lc rgbcolor "#E8182E", \
       "time.${TIMES[1]}.log" title "Speedup (${TIMES[1]})" smooth unique lw 2 lc rgbcolor "#ED913D", \
-      "time.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" smooth unique lw 2lc rgbcolor "#50ABD2";
+      "time.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" smooth unique lw 2 lc rgbcolor "#50ABD2"
 EOF
 
 rm -rf $TMP
