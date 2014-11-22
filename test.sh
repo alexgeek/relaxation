@@ -4,21 +4,11 @@ INC=${2:-1}
 FINISH=${3:-8}
 N=${4:-2050}
 echo "Testing with threading in range $START-$FINISH in increments of $INC for $N by $N array."
-<<<<<<< HEAD
-OUTPUT="time"
-TIMES=(real user sys)
-for t in ${TIMES[*]}; do
-  O="$OUTPUT.$t.log"
-  >$O
-  for i in `seq $START $INC $FINISH`; do
-  (time ./relax -n $N -t $i)  2>&1 > /dev/null | grep $t | awk '{print $2}' |sed "s/^[0-9]\+m//" | xargs printf "$i\t%s\n" >> $O
-=======
 OUTPUT="time.log"
 >$OUTPUT
 for i in `seq $START $INC $FINISH`; do
   for r in `seq 1 5`; do
     (time ./relax -n $N -t $i)  2>&1 > /dev/null | grep real | awk '{print $2}'|sed "s/^[0-9]\+m//" | xargs printf "$i\t%s\n" >> $OUTPUT
->>>>>>> 5cc352c8e4197837e392233b1848d4f44d2d3717
   done
 done
 
