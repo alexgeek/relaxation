@@ -11,6 +11,8 @@
 
 # Mail to user when job terminate or abort (b=begins, e=ends, a=aborts)
 #PBS -m ae
+
+cd $PBS_O_WORKDIR
 module load gcc torque
 make clean
 make
