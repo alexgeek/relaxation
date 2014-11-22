@@ -41,7 +41,7 @@ gnuplot <<- EOF
     set output "time.png"
     plot "time.${TIMES[0]}.log" title "Speedup (${TIMES[0]})" smooth unique, \
       "time.${TIMES[1]}.log" title "Speedup (${TIMES[1]})" smooth unique, \
-      "time.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" smooth unique,
+      "time.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" smooth unique
 EOF
 
 rm -rf $TMP
