@@ -11,5 +11,5 @@ gnuplot <<- EOF
     #set term dumb
     set term png
     set output "speedup.png"
-    plot "time.real.log" using 1:(${ST}/\$2) title "(real)" smooth unique lw 3
+    plot "time.real.log" using 1:($ST/\$2) title "(real)" smooth unique lw 3
 EOF
