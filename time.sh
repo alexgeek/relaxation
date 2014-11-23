@@ -38,9 +38,9 @@ gnuplot <<- EOF
     set xrange [$START:$FINISH]
     #set term dumb
     set term png
-    stats "time.${TIMES[0]}.log" u 1:2 nooutput
-    set label 1 "Maximun" at STATS_pos_max_y, STATS_max_y
-    set label 2 "Minimun" at STATS_pos_min_y, STATS_min_y
+    #stats "time.${TIMES[0]}.log" u 1:2 nooutput
+    #set label 1 "Maximun" at STATS_pos_max_y, STATS_max_y
+    #set label 2 "Minimun" at STATS_pos_min_y, STATS_min_y
     set output "time.png"
     plot "time.${TIMES[0]}.log" title "Speedup (${TIMES[0]})" smooth unique lw 2 lc rgb "#E8182E", \
       "time.${TIMES[1]}.log" title "Speedup (${TIMES[1]})" smooth unique lw 2 lc rgb "#ED913D", \
