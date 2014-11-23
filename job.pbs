@@ -18,3 +18,4 @@ module load gcc torque
 make clean
 make
 ./time.sh
+./speedup.sh
