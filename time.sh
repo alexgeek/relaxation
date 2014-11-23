@@ -42,9 +42,9 @@ gnuplot <<- EOF
     #set label 1 "Maximun" at STATS_pos_max_y, STATS_max_y
     #set label 2 "Minimun" at STATS_pos_min_y, STATS_min_y
     set output "time.png"
-    plot "time.${TIMES[0]}.log" title "Speedup (${TIMES[0]})" smooth unique lw 3, \
-      "time.${TIMES[1]}.log" title "Speedup (${TIMES[1]})" smooth unique lw 2, \
-      "time.${TIMES[2]}.log" title "Speedup (${TIMES[2]})" smooth unique lw 2
+    plot "time.${TIMES[0]}.log" title "(${TIMES[0]})" smooth unique lw 3, \
+      "time.${TIMES[1]}.log" title "(${TIMES[1]})" smooth unique lw 2, \
+      "time.${TIMES[2]}.log" title "(${TIMES[2]})" smooth unique lw 2
 EOF
 
 rm -rf $TMP

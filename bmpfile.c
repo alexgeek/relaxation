@@ -154,8 +154,8 @@ bmp_create_standard_color_table(bmpfile_t *bmp)
     bmp->colors[i].red = 166;
     bmp->colors[i].green = 202;
     bmp->colors[i].blue = 240;
-   
-    // overwrite colors 246 to 255 
+
+    // overwrite colors 246 to 255
     i = 246;
     bmp->colors[i].red = 255;
     bmp->colors[i].green = 251;
@@ -202,7 +202,7 @@ bmp_create_standard_color_table(bmpfile_t *bmp)
 
 /**
  * Create grayscale color table for BMP object
- */
+ *
 static void
 bmp_create_grayscale_color_table(bmpfile_t *bmp)
 {
@@ -221,7 +221,7 @@ bmp_create_grayscale_color_table(bmpfile_t *bmp)
     rgb_pixel_t color = {value, value, value, 0};
     bmp->colors[i] = color;
   }
-}
+} */
 
 /**
  * Malloc the memory for color palette
