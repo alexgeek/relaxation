@@ -2,7 +2,7 @@
 
 # Params {arg:-default}
 START=${1:-10}
-INC=${2:-100}
+INC=${2:-10}
 FINISH=${3:-1000}
 T=${4:-8}
 P=${5:-0.01}
@@ -38,7 +38,7 @@ gnuplot <<- EOF
     set title "Scalability Testing ($T threads)"
     set xrange [$START:$FINISH]
     set term png
-    set output "time.png"
+    set output "scale.png"
     plot "time.${TIMES[0]}.log" title "(${TIMES[0]})" smooth unique lw 3, \
       "time.${TIMES[1]}.log" title "(${TIMES[1]})" smooth unique lw 2, \
       "time.${TIMES[2]}.log" title "(${TIMES[2]})" smooth unique lw 2
