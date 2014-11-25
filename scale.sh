@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Params {arg:-default}
-START=${1:-10}
-INC=${2:-10}
-FINISH=${3:-1000}
+START=${1:-100}
+INC=${2:-100}
+FINISH=${3:-10000}
 T=${4:-8}
 P=${5:-0.01}
 
