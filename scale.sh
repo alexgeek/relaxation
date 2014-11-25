@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Params {arg:-default}
-START=${1:-100}
-INC=${2:-100}
-FINISH=${3:-10000}
+START=${1:-1}
+INC=${2:-1}
+FINISH=${3:-10}
 T=${4:-8}
 P=${5:-0.01}
 
@@ -22,12 +22,13 @@ done
 for i in `seq $START $INC $FINISH`; do
   # 5 trials
   for r in `seq 1 5`; do
+    N=$(dc -e "10 i ^ p")
     # write time data into tmp
-    (time ./relax -n $i -t $T -p $P)  2>&1 > /dev/null | grep -E "real|user|sys" > $TMP
+    (time ./relax -n $N -t $T -p $P)  2>&1 > /dev/null | grep -E "real|user|sys" > $TMP
     # write time data into separate logs with thread count
     for t in ${TIMES[*]}; do
       # grab, get second field, remove prefix, remove suffix, format, append
-      grep $t $TMP | awk '{print $2}'|sed "s/^[0-9]\+m//" |sed "s/s$//" | xargs printf "$i\t%s\n" >> "time.$t.log"
+      grep $t $TMP | awk '{print $2}'|sed "s/^[0-9]\+m//" |sed "s/s$//" | xargs printf "$N\t%s\n" >> "time.$t.log"
     done
   done
 done
