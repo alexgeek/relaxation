@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -Wall -g
+CFLAGS= -Wall -g -malign-double
 LIBS=-lpthread -lm
 MAIN=relax
 SRCS=grid.c thread.c bmpfile.c relax.c
