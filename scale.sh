@@ -5,9 +5,9 @@ START=${1:-10}
 INC=${2:-100}
 FINISH=${3:-1000}
 T=${4:-8}
-P=${5:-0.001}
+P=${5:-0.01}
 
-echo "Thread testing in range $START-$FINISH in increments of $INC for $N by $N array."
+echo "Scale testing on $T threads for $START-$FINISH in increments of $INC."
 
 TIMES=(real user sys)
 TMP="time.tmp"
