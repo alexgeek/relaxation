@@ -22,7 +22,7 @@ done
 for i in `seq $START $INC $FINISH`; do
   # 5 trials
   for r in `seq 1 5`; do
-    N=$(dc -e "10 i ^ p")
+    N=$(dc -e "10 $i ^ p")
     # write time data into tmp
     (time ./relax -n $N -t $T -p $P)  2>&1 > /dev/null | grep -E "real|user|sys" > $TMP
     # write time data into separate logs with thread count
