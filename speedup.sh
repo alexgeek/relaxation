@@ -2,7 +2,7 @@
 
 >"speedup.tmp"
 S=$(head -1 time.real.log | awk '{print $1}')
-ST=$(grep "^$S\s" 'time.real.log' | awk '{ sum += $2; n++ } END { if (n > 0) print sum / n; }')
+ST=$(grep "^$S[^0-9]" 'time.real.log' | awk '{ sum += $2; n++ } END { if (n > 0) print sum / n; }')
 echo "T(1) = $ST"
 gnuplot <<- EOF
     set xlabel "Threads"
